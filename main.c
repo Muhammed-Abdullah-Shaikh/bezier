@@ -19,9 +19,9 @@
 #define MARKER_SIZE 15.0f
 
 #define BACKGROUND_COLOR    0x353535FF
-#define LINE_COLOR          0xDA2C38FF
-#define GRID_COLOR          0x748CABFF
-#define RECT_COLOR          0x87C38FFF
+#define RED_COLOR          0xDA2C38FF
+#define GREEN_COLOR          0x87C38FFF
+#define BLUE_COLOR          0x748CABFF
 
 #define HEX_COLOR(hex)                      \
     ((hex) >> (3 * 8)) & 0xFF,              \
@@ -139,6 +139,27 @@ void render_marker(SDL_Renderer *renderer, Vec2 position, Color color)
 
 }
 
+/**
+ * Draws Bezier curve from 4 points a,b,c,d
+ */
+void render_bezier_markers(SDL_Renderer *renderer, 
+        Vec2 a, Vec2 b, Vec2 c, Vec2 d,
+        float s, Color color)
+{
+    for (float p = 0.0f; p <= 1.0f; p += s)
+    {
+        Vec2 ab = lerpv2(a, b, p);
+        Vec2 bc = lerpv2(b, c, p);
+        Vec2 cd = lerpv2(c, d, p);
+        Vec2 abc = lerpv2(ab, bc, p);
+        Vec2 bcd = lerpv2(bc, cd, p);
+        Vec2 abcd = lerpv2(abc, bcd, p);
+
+        render_marker(renderer, abcd, color);
+
+    }
+}
+
 #define PS_CAPACITY 256
 
 Vec2 ps[PS_CAPACITY];
@@ -160,9 +181,6 @@ int main(int argc, char *argv[])
                     window, -1, SDL_RENDERER_ACCELERATED));
 
     check_sdl_code(SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT));
-
-    // const Vec2 begin = vec2(0.0f, 0.0f);
-    // const Vec2 end = vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     float t = 0.0f;
     int quit = 0;
@@ -193,25 +211,39 @@ int main(int argc, char *argv[])
 
         check_sdl_code(SDL_RenderClear(renderer));
 
-        // render_line(renderer, vec2(0, 0), vec2(SCREEN_WIDTH, SCREEN_HEIGHT), (Color){LINE_COLOR});
-        // render_line(renderer, vec2(SCREEN_WIDTH, 0), vec2(0, SCREEN_HEIGHT), (Color){LINE_COLOR});
-        // fill_rect(renderer, vec2(0.0f, 0.0f), vec2(100.0f, 100.0f), (Color){RECT_COLOR});
-
-        // render_marker(renderer, begin , (Color){LINE_COLOR});
-        // render_marker(renderer, end, (Color){LINE_COLOR});
-        // render_marker(renderer, lerpv2(begin, end, (sin(t) + 1) * 0.5f), (Color){RECT_COLOR});
-
-        for (int i = 0; i < ps_count - 1; i++)
+        
+        for (int i = 0; ps_count > 0 && i < ps_count; i++)
         {
-            render_marker(renderer, ps[i], (Color){LINE_COLOR});
+            render_marker(renderer, ps[0], (Color){RED_COLOR});
         }
 
-        for (int i = 0; ps_count > 0 && i < ps_count - 1; i++)
+        if (ps_count >= 4)
         {
-           Vec2 lerp_marker = lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f); 
-
-           render_marker(renderer, lerp_marker, (Color){RECT_COLOR});
+            render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.1f, (Color){GREEN_COLOR});
         }
+
+        //const float p = (sinf(t) + 1) * 0.5f;
+
+         //Phase 1
+        //for (int i = 0; i < ps_count - 1; i++)
+        //{
+            //render_marker(renderer, ps[i], (Color){RED_COLOR});
+        //}
+
+         //Phase 2
+        //for (int i = 0; ps_count > 0 && i < ps_count - 1; i++)
+        //{
+           //render_marker(renderer, lerpv2(ps[i], ps[i + 1], p), (Color){GREEN_COLOR});
+        //}
+
+         //Phase 3
+        //for (int i = 0; ps_count > 1 && i < ps_count - 2; i++)
+        //{
+            //const Vec2 a = lerpv2(ps[i], ps[i + 1], p);
+            //const Vec2 b = lerpv2(ps[i + 1], ps[i + 2], p);
+
+            //render_marker(renderer, lerpv2(a, b, p), (Color){BLUE_COLOR});
+        //}
 
         SDL_RenderPresent(renderer);
 
