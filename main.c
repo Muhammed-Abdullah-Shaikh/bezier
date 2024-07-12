@@ -16,7 +16,7 @@
 #define SCREEN_FPS 60
 #define DELTA_TIME_SEC (1.0f / SCREEN_FPS)
 #define DELTA_TIME_MS ((Uint32)floorf(DELTA_TIME_SEC * 1000.0f))
-#define MARKER_SIZE 25.0f
+#define MARKER_SIZE 15.0f
 
 #define BACKGROUND_COLOR    0x353535FF
 #define LINE_COLOR          0xDA2C38FF
@@ -142,6 +142,7 @@ void render_marker(SDL_Renderer *renderer, Vec2 position, Color color)
 #define PS_CAPACITY 256
 
 Vec2 ps[PS_CAPACITY];
+int ps_count = 0;
 
 int main(int argc, char *argv[])
 {
@@ -160,10 +161,10 @@ int main(int argc, char *argv[])
 
     check_sdl_code(SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT));
 
-    const Vec2 begin = vec2(0.0f, 0.0f);
-    const Vec2 end = vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
-    float t = 0.0f;
+    // const Vec2 begin = vec2(0.0f, 0.0f);
+    // const Vec2 end = vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
 
+    float t = 0.0f;
     int quit = 0;
     while(!quit)
     {
@@ -175,6 +176,14 @@ int main(int argc, char *argv[])
                 case SDL_QUIT:
                     quit = 1;
                     break;
+                
+                case SDL_MOUSEBUTTONDOWN:
+                    switch (event.button.button)
+                    {
+                        case SDL_BUTTON_LEFT:
+                            ps[ps_count++] = vec2(event.button.x, event.button.y);
+                            break;
+                    }
             }
         }
 
@@ -188,10 +197,21 @@ int main(int argc, char *argv[])
         // render_line(renderer, vec2(SCREEN_WIDTH, 0), vec2(0, SCREEN_HEIGHT), (Color){LINE_COLOR});
         // fill_rect(renderer, vec2(0.0f, 0.0f), vec2(100.0f, 100.0f), (Color){RECT_COLOR});
 
-        render_marker(renderer, begin , (Color){LINE_COLOR});
-        render_marker(renderer, end, (Color){LINE_COLOR});
+        // render_marker(renderer, begin , (Color){LINE_COLOR});
+        // render_marker(renderer, end, (Color){LINE_COLOR});
+        // render_marker(renderer, lerpv2(begin, end, (sin(t) + 1) * 0.5f), (Color){RECT_COLOR});
 
-        render_marker(renderer, lerpv2(begin, end, (sin(t) + 1) * 0.5f), (Color){RECT_COLOR});
+        for (int i = 0; i < ps_count - 1; i++)
+        {
+            render_marker(renderer, ps[i], (Color){LINE_COLOR});
+        }
+
+        for (int i = 0; ps_count > 0 && i < ps_count - 1; i++)
+        {
+           Vec2 lerp_marker = lerpv2(ps[i], ps[i + 1], (sinf(t) + 1) * 0.5f); 
+
+           render_marker(renderer, lerp_marker, (Color){RECT_COLOR});
+        }
 
         SDL_RenderPresent(renderer);
 
