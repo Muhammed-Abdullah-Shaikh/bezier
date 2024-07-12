@@ -261,6 +261,9 @@ int main(int argc, char *argv[])
 
         if (ps_count >= 4)
         {
+            render_line(renderer, ps[0], ps[1], (Color){RED_COLOR});
+            render_line(renderer, ps[2], ps[3], (Color){RED_COLOR});
+
             render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.05f, (Color){GREEN_COLOR});
         }
 
