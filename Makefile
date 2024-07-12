@@ -4,6 +4,6 @@ CFLAGS = -Wall -Wextra -pedantic $(SDLC2_FLAGS)
 LIBS = -lm `pkg-config --libs sdl2`
 
 bezier: main.c
-	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $< $(LIBS) -mconsole
 
 

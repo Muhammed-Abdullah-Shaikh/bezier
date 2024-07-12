@@ -146,14 +146,14 @@ void render_bezier_markers(SDL_Renderer *renderer,
         Vec2 a, Vec2 b, Vec2 c, Vec2 d,
         float s, Color color)
 {
-    for (float p = 0.0f; p <= 1.0f; p += s)
+    for (float p = 0.0f+s; p <= 1.0f; p += s)
     {
-        Vec2 ab = lerpv2(a, b, p);
-        Vec2 bc = lerpv2(b, c, p);
-        Vec2 cd = lerpv2(c, d, p);
-        Vec2 abc = lerpv2(ab, bc, p);
-        Vec2 bcd = lerpv2(bc, cd, p);
-        Vec2 abcd = lerpv2(abc, bcd, p);
+        const Vec2 ab = lerpv2(a, b, p);
+        const Vec2 bc = lerpv2(b, c, p);
+        const Vec2 cd = lerpv2(c, d, p);
+        const Vec2 abc = lerpv2(ab, bc, p);
+        const Vec2 bcd = lerpv2(bc, cd, p);
+        const Vec2 abcd = lerpv2(abc, bcd, p);
 
         render_marker(renderer, abcd, color);
 
@@ -164,6 +164,30 @@ void render_bezier_markers(SDL_Renderer *renderer,
 
 Vec2 ps[PS_CAPACITY];
 int ps_count = 0;
+int ps_selected = -1;
+
+/** 
+ * Take a position and check if there is marker there
+ * @param pos : Vec2
+ * @return index of the marker 
+ */
+int ps_at(Vec2 pos)
+{
+    const Vec2 ps_size = vec2(MARKER_SIZE, MARKER_SIZE);
+    for (int i = 0; i < ps_count; i++)
+    {
+        const Vec2 ps_begin = vec2_sub(ps[i], vec2_scale(ps_size, 0.5f));
+        const Vec2 ps_end = vec2_add(ps_begin, ps_size);
+
+        if (pos.x >= ps_begin.x && pos.x <= ps_end.x
+            && pos.y >= ps_begin.y && pos.y <= ps_end.y)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -199,9 +223,27 @@ int main(int argc, char *argv[])
                     switch (event.button.button)
                     {
                         case SDL_BUTTON_LEFT:
-                            ps[ps_count++] = vec2(event.button.x, event.button.y);
+                            ;const Vec2 mouse_pos = vec2(event.button.x, event.button.y);
+                            if (ps_count < 4)
+                                ps[ps_count++] = mouse_pos;
+                            else
+                                ps_selected = ps_at(mouse_pos);
                             break;
                     }
+                    break;
+                case SDL_MOUSEMOTION:
+                    ;Vec2 mouse_pos = vec2(event.motion.x, event.motion.y);
+                    if (ps_selected >= 0)
+                    {
+                        ps[ps_selected] = mouse_pos;
+                    }
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    if (event.button.button == SDL_BUTTON_LEFT)
+                    {
+                        ps_selected = -1;
+                    }
+                    break;
             }
         }
 
@@ -214,12 +256,12 @@ int main(int argc, char *argv[])
         
         for (int i = 0; ps_count > 0 && i < ps_count; i++)
         {
-            render_marker(renderer, ps[0], (Color){RED_COLOR});
+            render_marker(renderer, ps[i], (Color){RED_COLOR});
         }
 
         if (ps_count >= 4)
         {
-            render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.1f, (Color){GREEN_COLOR});
+            render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.05f, (Color){GREEN_COLOR});
         }
 
         //const float p = (sinf(t) + 1) * 0.5f;
