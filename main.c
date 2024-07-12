@@ -139,8 +139,25 @@ void render_marker(SDL_Renderer *renderer, Vec2 position, Color color)
 
 }
 
+
 /**
- * Draws Bezier curve from 4 points a,b,c,d
+ * Returns a point after interpolation on given points a,b,c,d
+ */
+Vec2 bezier_sample(Vec2 a, Vec2 b, Vec2 c, Vec2 d, float p)
+{
+    const Vec2 ab = lerpv2(a, b, p);
+    const Vec2 bc = lerpv2(b, c, p);
+    const Vec2 cd = lerpv2(c, d, p);
+    const Vec2 abc = lerpv2(ab, bc, p);
+    const Vec2 bcd = lerpv2(bc, cd, p);
+    const Vec2 abcd = lerpv2(abc, bcd, p);
+    return abcd;
+}
+
+/**
+ * Draws markers on the Bezier curve from 4 points a,b,c,d
+ *
+ * @TODO: Make it work with arbitrary number of points
  */
 void render_bezier_markers(SDL_Renderer *renderer, 
         Vec2 a, Vec2 b, Vec2 c, Vec2 d,
@@ -148,16 +165,24 @@ void render_bezier_markers(SDL_Renderer *renderer,
 {
     for (float p = 0.0f+s; p <= 1.0f; p += s)
     {
-        const Vec2 ab = lerpv2(a, b, p);
-        const Vec2 bc = lerpv2(b, c, p);
-        const Vec2 cd = lerpv2(c, d, p);
-        const Vec2 abc = lerpv2(ab, bc, p);
-        const Vec2 bcd = lerpv2(bc, cd, p);
-        const Vec2 abcd = lerpv2(abc, bcd, p);
-
-        render_marker(renderer, abcd, color);
+        render_marker(renderer, bezier_sample(a, b, c, d, p), color);
 
     }
+}
+
+
+void render_bezier_curve(SDL_Renderer *renderer, 
+        Vec2 a, Vec2 b, Vec2 c, Vec2 d,
+        float s, Color color)
+{
+    for (float p = 0.0f+s; p <= 1.0f; p += s)
+    {
+        Vec2 begin = bezier_sample(a, b, c, d, p);
+        Vec2 end = bezier_sample(a, b, c, d, p+s);
+
+        render_line(renderer, begin, end, color);
+    }
+
 }
 
 #define PS_CAPACITY 256
@@ -207,6 +232,7 @@ int main(int argc, char *argv[])
     check_sdl_code(SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT));
 
     float t = 0.0f;
+    int markers = 1;
     int quit = 0;
     while(!quit)
     {
@@ -219,6 +245,15 @@ int main(int argc, char *argv[])
                     quit = 1;
                     break;
                 
+                case SDL_KEYDOWN:
+                    switch (event.key.keysym.sym)
+                    {
+                        case SDLK_CAPSLOCK:
+                            markers = !markers;
+                    }
+                    break;
+
+
                 case SDL_MOUSEBUTTONDOWN:
                     switch (event.button.button)
                     {
@@ -264,31 +299,11 @@ int main(int argc, char *argv[])
             render_line(renderer, ps[0], ps[1], (Color){RED_COLOR});
             render_line(renderer, ps[2], ps[3], (Color){RED_COLOR});
 
-            render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.05f, (Color){GREEN_COLOR});
+            if (markers)
+                render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.01f, (Color){GREEN_COLOR});
+            else
+                render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], 0.01f, (Color){GREEN_COLOR});
         }
-
-        //const float p = (sinf(t) + 1) * 0.5f;
-
-         //Phase 1
-        //for (int i = 0; i < ps_count - 1; i++)
-        //{
-            //render_marker(renderer, ps[i], (Color){RED_COLOR});
-        //}
-
-         //Phase 2
-        //for (int i = 0; ps_count > 0 && i < ps_count - 1; i++)
-        //{
-           //render_marker(renderer, lerpv2(ps[i], ps[i + 1], p), (Color){GREEN_COLOR});
-        //}
-
-         //Phase 3
-        //for (int i = 0; ps_count > 1 && i < ps_count - 2; i++)
-        //{
-            //const Vec2 a = lerpv2(ps[i], ps[i + 1], p);
-            //const Vec2 b = lerpv2(ps[i + 1], ps[i + 2], p);
-
-            //render_marker(renderer, lerpv2(a, b, p), (Color){BLUE_COLOR});
-        //}
 
         SDL_RenderPresent(renderer);
 
