@@ -3,7 +3,7 @@
 Just a fun little project to learn how to use SDL2 and how to render
 Bézier curves.
 
-![demo](./demo.png)
+![demo](./media/bezier_demo.gif)
 
 ## Quick Start
 

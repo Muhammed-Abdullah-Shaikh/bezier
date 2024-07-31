@@ -234,6 +234,7 @@ int main(int argc, char *argv[])
     float t = 0.0f;
     int markers = 1;
     int quit = 0;
+    float bezier_sample_step = 0.05f;
     while(!quit)
     {
         SDL_Event event;
@@ -279,6 +280,16 @@ int main(int argc, char *argv[])
                         ps_selected = -1;
                     }
                     break;
+                case SDL_MOUSEWHEEL:
+                    if (event.wheel.y > 0)
+                    {
+                        bezier_sample_step = fmin(bezier_sample_step + 0.001f, 1.0f);
+                    }
+                    else
+                    {
+                        bezier_sample_step = fmax(bezier_sample_step - 0.001f, 0.001f);
+                    }
+                    break;
             }
         }
 
@@ -289,20 +300,21 @@ int main(int argc, char *argv[])
         check_sdl_code(SDL_RenderClear(renderer));
 
         
-        for (int i = 0; ps_count > 0 && i < ps_count; i++)
-        {
-            render_marker(renderer, ps[i], (Color){RED_COLOR});
-        }
-
         if (ps_count >= 4)
         {
+            if (markers)
+                render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], bezier_sample_step, (Color){GREEN_COLOR});
+            else
+                render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], bezier_sample_step, (Color){GREEN_COLOR});
+
             render_line(renderer, ps[0], ps[1], (Color){RED_COLOR});
             render_line(renderer, ps[2], ps[3], (Color){RED_COLOR});
 
-            if (markers)
-                render_bezier_markers(renderer, ps[0], ps[1], ps[2], ps[3], 0.01f, (Color){GREEN_COLOR});
-            else
-                render_bezier_curve(renderer, ps[0], ps[1], ps[2], ps[3], 0.01f, (Color){GREEN_COLOR});
+        }
+
+        for (int i = 0; ps_count > 0 && i < ps_count; i++)
+        {
+            render_marker(renderer, ps[i], (Color){RED_COLOR});
         }
 
         SDL_RenderPresent(renderer);
