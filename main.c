@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
                             ;const Vec2 mouse_pos = vec2(event.button.x, event.button.y);
                             ps_selected = ps_at(mouse_pos);
 
-                            if (ps_selected < 0)
+                            if (ps_selected < 0 && ps_count < PS_CAPACITY)
                                 ps[ps_count++] = mouse_pos;
 
                             break;
@@ -344,21 +344,21 @@ int main(int argc, char *argv[])
         check_sdl_code(SDL_RenderClear(renderer));
 
         
-        if (ps_count >= 4)
+        if (ps_count >= 1)
         {
             if (markers)
                 render_bezier_markers(renderer, ps, xs, ps_count, bezier_sample_step, (Color){GREEN_COLOR});
             else
                 render_bezier_curve(renderer, ps, xs, ps_count, bezier_sample_step, (Color){GREEN_COLOR});
-
-            //render_line(renderer, ps[0], ps[1], (Color){RED_COLOR});
-            //render_line(renderer, ps[2], ps[3], (Color){RED_COLOR});
-
         }
 
         for (int i = 0; ps_count > 0 && i < ps_count; i++)
         {
             render_marker(renderer, ps[i], (Color){RED_COLOR});
+            if ( i < ps_count - 1)
+            {
+                render_line(renderer, ps[i], ps[i+1], (Color){RED_COLOR});
+            }
         }
 
         SDL_RenderPresent(renderer);
